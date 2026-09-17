@@ -1,1 +1,12 @@
-const menu=document.querySelector('.menu');const nav=document.querySelector('.site-header nav');if(menu){menu.addEventListener('click',()=>{const open=nav.style.display==='flex';nav.style.display=open?'none':'flex';nav.style.position='absolute';nav.style.top='62px';nav.style.left='0';nav.style.right='0';nav.style.padding='20px 7vw';nav.style.background='#f4f1ea';nav.style.flexDirection='column';nav.style.borderBottom='1px solid #d8d2c6';});}
+const menu=document.querySelector('.menu');const nav=document.querySelector('.site-header nav');const themeToggle=document.querySelector('.theme-toggle');
+
+if(menu){menu.addEventListener('click',()=>{const open=nav.style.display==='flex';nav.style.display=open?'none':'flex';nav.style.position='absolute';nav.style.top='62px';nav.style.left='0';nav.style.right='0';nav.style.padding='20px 7vw';nav.style.background=document.body.classList.contains('dark-theme')?'#111':'#f4f1ea';nav.style.flexDirection='column';nav.style.borderBottom=document.body.classList.contains('dark-theme')?'1px solid #2b2b2b':'1px solid #d8d2c6';});}
+
+const savedTheme=localStorage.getItem('theme');
+if(savedTheme==='dark'){document.body.classList.add('dark-theme');}
+
+function updateThemeButton(){if(!themeToggle)return;const dark=document.body.classList.contains('dark-theme');themeToggle.textContent=dark?'☀':'☾';themeToggle.setAttribute('aria-label',dark?'Включить светлую тему':'Включить тёмную тему');themeToggle.title=dark?'Светлая тема':'Тёмная тема';if(nav&&nav.style.display==='flex'){nav.style.background=dark?'#111':'#f4f1ea';nav.style.borderBottom=dark?'1px solid #2b2b2b':'1px solid #d8d2c6';}}
+
+updateThemeButton();
+
+if(themeToggle){themeToggle.addEventListener('click',()=>{const dark=document.body.classList.toggle('dark-theme');localStorage.setItem('theme',dark?'dark':'light');updateThemeButton();});}
