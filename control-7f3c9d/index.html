@@ -1,1 +1,95 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Администрирование</title><link rel="stylesheet" href="admin.css"></head><body><main class="wrap"><section id="auth" class="panel"><div class="eyebrow">ЗАКРЫТЫЙ РАЗДЕЛ</div><h1>Администрирование</h1><p class="muted">Почта подтверждается ссылкой из письма. Пароль придумываете самостоятельно.</p><div class="tabs"><button id="loginTab" class="active">Войти</button><button id="registerTab">Регистрация</button></div><form id="loginForm"><label>Почта<input id="loginEmail" type="email" autocomplete="email" required></label><label>Пароль<div class="password"><input id="loginPassword" type="password" autocomplete="current-password" required><button type="button" class="eye" data-eye="loginPassword">◉</button></div></label><button class="primary">Войти</button><button type="button" class="link" id="forgot">Забыли пароль?</button></form><form id="registerForm" hidden><label>Почта<input id="registerEmail" type="email" autocomplete="email" required></label><label>Придумайте пароль<div class="password"><input id="registerPassword" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="eye" data-eye="registerPassword">◉</button></div></label><label>Повторите пароль<input id="registerPassword2" type="password" autocomplete="new-password" minlength="8" required></label><button class="primary">Создать аккаунт</button></form><form id="resetForm" hidden><label>Почта<input id="resetEmail" type="email" autocomplete="email" required></label><button class="primary">Отправить письмо для сброса</button><button type="button" class="link" id="backLogin">Назад</button></form><form id="newPasswordForm" hidden><p class="muted">Введите новый пароль.</p><label>Новый пароль<div class="password"><input id="newPassword" type="password" minlength="8" autocomplete="new-password" required><button type="button" class="eye" data-eye="newPassword">◉</button></div></label><button class="primary">Сохранить новый пароль</button></form><p id="message" class="message"></p></section><section id="dashboard" class="panel" hidden><div class="topline"><div><div class="eyebrow">ПАНЕЛЬ</div><h1>Библиотека</h1></div><button id="logout" class="secondary">Выйти</button></div><p class="muted">Только PDF. Максимальный размер файла — 200 МБ.</p><form id="bookForm" class="upload"><label>Название книги<input id="title" required maxlength="200"></label><label>Автор<input id="author" maxlength="200"></label><label>PDF-файл<input id="pdf" type="file" accept="application/pdf,.pdf" required></label><button class="primary">Загрузить PDF</button><p id="uploadMessage" class="message"></p></form><div id="books" class="books"></div></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="admin.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Private Control</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#111;color:#eee;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{width:min(920px,92vw);margin:0 auto;padding:56px 0}.panel{background:#181818;border:1px solid #2c2c2c;border-radius:18px;padding:28px;box-shadow:0 20px 60px #0006}.login{max-width:420px;margin:10vh auto}.muted{color:#9b9b9b}.eyebrow{font-size:11px;letter-spacing:.16em;color:#999}.title{font-size:30px;margin:8px 0 26px}label{display:block;font-size:13px;margin:16px 0 7px;color:#bbb}input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid #3a3a3a;background:#101010;color:#fff;font:inherit;outline:none}input:focus{border-color:#777}button{border:0;border-radius:10px;padding:13px 18px;background:#eee;color:#111;font-weight:700;font:inherit;cursor:pointer}button.secondary{background:#242424;color:#ddd;border:1px solid #3a3a3a}button.danger{background:#3a1717;color:#ffbaba}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.hidden{display:none!important}.notice{margin-top:14px;font-size:13px;color:#d9a8a8}.upload-box{margin-top:22px;padding:20px;border:1px dashed #444;border-radius:14px}.books{display:grid;gap:12px;margin-top:24px}.book{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px;border:1px solid #303030;border-radius:13px;background:#141414}.book strong{display:block}.book small{display:block;color:#999;margin-top:5px}.progress{height:5px;background:#2a2a2a;border-radius:9px;overflow:hidden;margin-top:12px}.progress span{display:block;height:100%;width:0;background:#eee;transition:width .15s}.top{margin-bottom:24px}.file{margin-top:12px;color:#aaa;font-size:13px}.empty{padding:20px;color:#888;border:1px dashed #333;border-radius:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section id="login" class="panel login">
+      <div class="eyebrow">PRIVATE CONTROL</div>
+      <h1 class="title">Вход</h1>
+      <p class="muted">Раздел доступен только авторизованным администраторам.</p>
+      <form id="loginForm">
+        <label for="username">Логин</label><input id="username" autocomplete="username" required>
+        <label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required>
+        <button style="width:100%;margin-top:20px">Войти</button>
+        <div id="loginError" class="notice"></div>
+      </form>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="row top"><div><div class="eyebrow">PRIVATE CONTROL</div><h1 class="title">Панель управления</h1><div class="muted">Публикация книг на сайте</div></div><button id="logout" class="secondary">Выйти</button></div>
+      <div class="panel">
+        <div class="row"><div><h2 style="margin:0 0 6px">Добавить книгу</h2><div class="muted">Только PDF · до 200 МБ</div></div></div>
+        <div class="upload-box">
+          <label for="bookTitle">Название</label><input id="bookTitle" maxlength="180" required>
+          <label for="bookAuthor">Автор</label><input id="bookAuthor" maxlength="120">
+          <label for="pdf">PDF-файл</label><input id="pdf" type="file" accept="application/pdf,.pdf" required>
+          <div id="fileName" class="file"></div>
+          <div class="progress"><span id="bar"></span></div>
+          <div class="row" style="margin-top:14px"><div id="uploadStatus" class="muted"></div><button id="uploadBtn">Загрузить</button></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px"><div class="row"><h2 style="margin:0">Книги</h2><button id="refresh" class="secondary">Обновить</button></div><div id="books" class="books"></div></div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { upload } from 'https://cdn.jsdelivr.net/npm/@vercel/blob@2.4.0/+esm';
+
+    const login = document.querySelector('#login'), dashboard = document.querySelector('#dashboard');
+    const loginForm = document.querySelector('#loginForm'), loginError = document.querySelector('#loginError');
+    const pdf = document.querySelector('#pdf'), fileName = document.querySelector('#fileName');
+    const title = document.querySelector('#bookTitle'), author = document.querySelector('#bookAuthor');
+    const status = document.querySelector('#uploadStatus'), bar = document.querySelector('#bar');
+    const books = document.querySelector('#books');
+
+    function showDashboard(){login.classList.add('hidden');dashboard.classList.remove('hidden');loadBooks();}
+    function showLogin(){dashboard.classList.add('hidden');login.classList.remove('hidden');}
+
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault(); loginError.textContent='';
+      try{
+        const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value,password:password.value})});
+        const data=await r.json(); if(!r.ok) throw new Error(data.error||'Ошибка входа');
+        loginForm.reset(); showDashboard();
+      }catch(err){loginError.textContent=err.message;}
+    });
+
+    document.querySelector('#logout').onclick=async()=>{await fetch('/api/logout',{method:'POST'});showLogin();};
+    pdf.onchange=()=>{fileName.textContent=pdf.files[0]?pdf.files[0].name:'';};
+
+    document.querySelector('#uploadBtn').onclick=async()=>{
+      const file=pdf.files[0];
+      if(!title.value.trim()) return status.textContent='Введите название книги.';
+      if(!file) return status.textContent='Выберите PDF-файл.';
+      if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')) return status.textContent='Разрешены только PDF-файлы.';
+      if(file.size>200*1024*1024) return status.textContent='Файл больше 200 МБ.';
+      const safeTitle=encodeURIComponent(title.value.trim());
+      const safeAuthor=encodeURIComponent(author.value.trim());
+      const pathname=`books/${Date.now()}__${safeTitle}__${safeAuthor}.pdf`;
+      status.textContent='Загрузка…'; bar.style.width='0%';
+      try{
+        await upload(pathname,file,{access:'public',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({title:title.value,author:author.value}),multipart:true,onUploadProgress(e){bar.style.width=`${e.percentage}%`;}});
+        status.textContent='Книга опубликована.'; title.value='';author.value='';pdf.value='';fileName.textContent='';bar.style.width='0%';loadBooks();
+      }catch(err){status.textContent=err.message||'Ошибка загрузки.';bar.style.width='0%';}
+    };
+
+    async function loadBooks(){
+      books.innerHTML='<div class="empty">Загрузка…</div>';
+      const r=await fetch('/api/books'); const data=await r.json();
+      if(!data.books?.length){books.innerHTML='<div class="empty">Книг пока нет.</div>';return;}
+      books.innerHTML=data.books.map(b=>`<div class="book"><div><strong>${escapeHtml(b.title)}</strong><small>${escapeHtml(b.author||'Автор не указан')} · ${formatSize(b.size)}</small></div><div class="row"><a href="${b.url}" target="_blank" rel="noopener" style="color:#fff">Открыть</a><button class="danger" data-url="${encodeURIComponent(b.url)}">Удалить</button></div></div>`).join('');
+      books.querySelectorAll('.danger').forEach(btn=>btn.onclick=async()=>{if(!confirm('Удалить эту книгу?'))return;const r=await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:decodeURIComponent(btn.dataset.url)})});if(r.ok)loadBooks();else alert((await r.json()).error||'Ошибка удаления');});
+    }
+    document.querySelector('#refresh').onclick=loadBooks;
+    function formatSize(n){if(!n)return '';const u=['Б','КБ','МБ','ГБ'];let i=0,x=n;while(x>=1024&&i<3){x/=1024;i++;}return `${x.toFixed(i?1:0)} ${u[i]}`;}
+    function escapeHtml(s=''){return s.replace(/[&<>\'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));}
+  </script>
+</body>
+</html>
