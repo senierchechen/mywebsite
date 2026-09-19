@@ -60,88 +60,25 @@
     iframe{display:block;width:100%;height:calc(100vh - 170px);min-height:620px;border:0;background:#fff}
     .notice{padding:14px 15px;border:1px dashed #383838;border-radius:12px;color:#aaa;line-height:1.5}
     @media(max-width:850px){
-      .sidebar{
-        width:100%;
-        height:74px;
-        padding:7px 8px calc(7px + env(safe-area-inset-bottom));
-        top:auto;
-        bottom:0;
-        left:0;
-        right:0;
-        border-right:0;
-        border-top:1px solid #292929;
-        display:flex;
-        align-items:center;
-        background:#111;
-      }
+      .sidebar{width:100%;height:74px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));top:auto;bottom:0;left:0;right:0;border-right:0;border-top:1px solid #292929;display:flex;align-items:center;background:#111}
       .side-title,.side-bottom{display:none}
-      .nav{
-        width:100%;
-        display:grid;
-        grid-template-columns:repeat(4,1fr);
-        gap:4px;
-      }
-      .nav button{
-        min-width:0;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        gap:3px;
-        text-align:center;
-        font-size:18px;
-        line-height:1;
-        padding:7px 3px;
-        border-radius:10px;
-      }
-      .nav button span{
-        display:block;
-        font-size:10px;
-        font-weight:600;
-        line-height:1.1;
-      }
-      .main{
-        margin-left:0;
-        width:100%;
-        padding:16px 14px calc(92px + env(safe-area-inset-bottom));
-      }
-      .topbar{
-        align-items:center;
-        margin-bottom:16px;
-      }
-      .topbar h1{
-        font-size:28px;
-      }
+      .nav{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+      .nav button{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;font-size:18px;line-height:1;padding:7px 3px;border-radius:10px}
+      .nav button span{display:block;font-size:10px;font-weight:600;line-height:1.1}
+      .main{margin-left:0;width:100%;padding:16px 14px calc(92px + env(safe-area-inset-bottom))}
+      .topbar{align-items:center;margin-bottom:16px}
+      .topbar h1{font-size:28px}
       .top-actions{flex-wrap:nowrap}
       .top-actions .secondary{padding:10px 12px}
       .grid{grid-template-columns:1fr}
       .upload-grid{grid-template-columns:1fr}
       .full{grid-column:auto}
-      .section-head{
-        align-items:flex-start;
-        flex-wrap:wrap;
-      }
-      .preview-shell{
-        border-radius:14px;
-      }
-      .preview-bar{
-        flex-wrap:wrap;
-        gap:9px;
-      }
-      .preview-bar > div{
-        width:100%;
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:8px;
-      }
-      .preview-bar button{
-        width:100%;
-        margin:0;
-      }
-      iframe{
-        height:calc(100vh - 245px);
-        min-height:560px;
-      }
+      .section-head{align-items:flex-start;flex-wrap:wrap}
+      .preview-shell{border-radius:14px}
+      .preview-bar{flex-wrap:wrap;gap:9px}
+      .preview-bar > div{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .preview-bar button{width:100%;margin:0}
+      iframe{height:calc(100vh - 245px);min-height:560px}
     }
   </style>
 </head>
@@ -324,7 +261,7 @@ document.querySelector('#uploadForm').addEventListener('submit',async e=>{
     const safeTitle = meta.title || 'Книга';
     const safeAuthor = meta.author || 'Автор';
     const pathname = 'books/' + Date.now() + '__' + encodeURIComponent(safeTitle) + '__' + encodeURIComponent(safeAuthor) + '.pdf';
-    await upload(pathname,{body:file,access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta),multipart:file.size > 4.5 * 1024 * 1024});
+    await upload(pathname,file,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta),multipart:file.size > 4.5 * 1024 * 1024});
     status.className='status ok';status.textContent='Книга опубликована.';
     e.target.reset();loadBooks();
   }catch(err){status.className='status error';status.textContent=err.message}
