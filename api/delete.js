@@ -7,75 +7,89 @@ function decodePath(value = '') {
 
 async function listBooksFresh() {
   const token = process.env.BLOB_READ_WRITE_TOKEN || '';
-  const url = 'https://blob.vercel-storage.com/?prefix=books/&limit=1000&cache=0';
-  const response = await fetch(url, {
-    headers: { Authorization: 'Bearer ' + token },
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Не удалось получить список файлов из Blob.');
-  return (await response.json()).blobs || [];
-}
+  if (!token) throw new Error('BLOB_READ_WRITE_TOKEN не настроен.');
 
-async function waitUntilDeleted(pathname) {
-  for (let attempt = 0; attempt < 15; attempt++) {
-    const remaining = await listBooksFresh();
-    if (!remaining.some((blob) => blob.pathname === pathname)) return true;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const response = await fetch(
+    'https://blob.vercel-storage.com/?prefix=books/&limit=1000&cache=0',
+    {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Не удалось получить список файлов из Blob.');
   }
-  return false;
+
+  const data = await response.json();
+  return Array.isArray(data.blobs) ? data.blobs : [];
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Требуется вход администратора.' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  const pathname = decodePath(typeof req.body?.pathname === 'string' ? req.body.pathname : '');
+  if (!isAdmin(req)) {
+    return res.status(401).json({ error: 'Требуется вход администратора.' });
+  }
 
-  if (!pathname || !pathname.startsWith('books/') || !pathname.toLowerCase().endsWith('.pdf')) {
+  const rawPath = typeof req.body?.pathname === 'string' ? req.body.pathname : '';
+  const pathname = decodePath(rawPath);
+
+  if (
+    !pathname ||
+    !pathname.startsWith('books/') ||
+    !pathname.toLowerCase().endsWith('.pdf')
+  ) {
     return res.status(400).json({ error: 'Недопустимый файл.' });
   }
 
+  const token = process.env.BLOB_READ_WRITE_TOKEN || '';
+
   try {
     const blobs = await listBooksFresh();
-    const target = blobs.find((blob) => blob.pathname === pathname);
+    const target = blobs.find(
+      (blob) => blob.pathname === pathname || decodePath(blob.pathname) === pathname
+    );
 
     if (!target) {
       return res.status(404).json({ error: 'Книга уже удалена или не найдена.' });
     }
 
-    // Use Vercel's official Blob SDK delete operation with the private-store token.
-    await del(pathname, {
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
+    // Delete using the exact Blob URL returned by the Blob API.
+    // This avoids pathname encoding mismatches.
+    await del(target.url, { token });
 
-    // Remove the cover if this book has one.
-    const name = pathname.split('/').pop().replace(/\.pdf$/i, '');
-    const parts = name.split('__');
-    const coverUrl = parts[3] ? decodePath(parts[3]) : '';
+    // Covers are encoded into the PDF filename as the 4th "__" segment.
+    const filename = pathname.split('/').pop() || '';
+    const withoutPdf = filename.replace(/\.pdf$/i, '');
+    const parts = withoutPdf.split('__');
+    const coverUrl = parts.length >= 4
+      ? decodePath(parts.slice(3).join('__'))
+      : '';
 
-    if (coverUrl && coverUrl.startsWith('https://')) {
+    if (coverUrl.startsWith('https://')) {
       try {
-        await del(coverUrl, {
-          token: process.env.BLOB_READ_WRITE_TOKEN,
-        });
+        await del(coverUrl, { token });
       } catch (coverError) {
+        // The PDF is already deleted; a missing cover must not make the
+        // whole operation look like a failed book deletion.
         console.error('Cover delete failed:', coverError);
       }
     }
 
-    // del() is asynchronous, so wait until the Blob API no longer lists the PDF.
-    const deleted = await waitUntilDeleted(pathname);
-
-    if (!deleted) {
-      return res.status(500).json({
-        error: 'Удаление запущено, но Vercel Blob пока не подтвердил исчезновение книги. Попробуйте обновить список через несколько секунд.',
-      });
-    }
-
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    return res.status(200).json({ ok: true, deleted: pathname });
+    res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return res.status(200).json({
+      ok: true,
+      deleted: pathname,
+      deletedUrl: target.url,
+    });
   } catch (error) {
     console.error('Book deletion failed:', error);
-    return res.status(500).json({ error: error?.message || 'Не удалось удалить книгу.' });
+    res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return res.status(500).json({
+      error: error?.message || 'Не удалось удалить книгу.',
+    });
   }
 }
