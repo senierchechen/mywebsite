@@ -7,16 +7,23 @@ export default async function handler(req, res) {
 
   try {
     const body = await req.json();
+
     const result = await handleUpload({
       body,
       request: req,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
-        if (!pathname.toLowerCase().endsWith('.pdf')) throw new Error('Разрешены только PDF-файлы.');
+        if (!pathname.startsWith('books/') || !pathname.toLowerCase().endsWith('.pdf')) {
+          throw new Error('Разрешены только PDF-файлы в разделе books.');
+        }
+
         let meta = {};
         try { meta = JSON.parse(clientPayload || '{}'); } catch {}
+
         const title = String(meta.title || '').trim().slice(0, 180);
         const author = String(meta.author || '').trim().slice(0, 120);
+
         if (!title) throw new Error('Название книги обязательно.');
+
         return {
           allowedContentTypes: ['application/pdf'],
           maximumSizeInBytes: 200 * 1024 * 1024,
@@ -25,18 +32,16 @@ export default async function handler(req, res) {
         };
       },
       onUploadCompleted: async ({ blob }) => {
-        const response = await fetch(blob.url, { headers: { Range: 'bytes=0-4' } });
-        const bytes = new Uint8Array(await response.arrayBuffer());
-        const magic = new TextDecoder().decode(bytes);
-        if (magic !== '%PDF-') {
-          const { del } = await import('@vercel/blob');
-          await del(blob.url);
-          throw new Error('Файл не прошёл проверку PDF.');
+        if (!blob.pathname.startsWith('books/') || !blob.pathname.toLowerCase().endsWith('.pdf')) {
+          throw new Error('Недопустимый путь книги.');
         }
       },
     });
+
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    return res.status(400).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
