@@ -3,102 +3,250 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin — NOXCHIY</title>
+  <title>NOXCHIY — Админ-панель</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#0b0b0b;color:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .wrap{max-width:760px;margin:0 auto;padding:32px 18px 60px}.card{background:#151515;border:1px solid #292929;border-radius:18px;padding:22px;margin-top:18px}
-    h1{margin:0 0 8px;font-size:28px}.muted{color:#999}.hidden{display:none}label{display:block;margin:15px 0 7px;color:#bbb;font-size:14px}
-    input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid #333;background:#0f0f0f;color:#fff;font-size:16px}
-    button{border:0;border-radius:10px;padding:12px 16px;background:#fff;color:#111;font-weight:700;font-size:15px;cursor:pointer;margin-top:16px}
-    button.secondary{background:#252525;color:#fff}button.danger{background:#7d2525;color:#fff;margin-top:0}.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .book{padding:15px 0;border-bottom:1px solid #292929}.book:last-child{border-bottom:0}.book-title{font-weight:700}.book-author{color:#999;font-size:14px;margin-top:4px}
-    .book-actions{display:flex;gap:8px;margin-top:10px}.book-actions a{color:#fff;text-decoration:none;font-size:14px}
-    .status{margin-top:12px;color:#aaa;font-size:14px}.error{color:#ff7777}.ok{color:#75d39a}
+    *{box-sizing:border-box}
+    :root{color-scheme:dark}
+    body{margin:0;background:#090909;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:22px}
+    .login{width:min(440px,100%);background:#141414;border:1px solid #292929;border-radius:22px;padding:28px;box-shadow:0 20px 70px #0008}
+    .brand{font-weight:800;letter-spacing:.12em;font-size:13px;color:#aaa}
+    h1{margin:9px 0 7px;font-size:30px;line-height:1.1}
+    h2{margin:0;font-size:20px}
+    p{margin:0}
+    .muted{color:#929292}
+    label{display:block;margin:18px 0 8px;color:#bcbcbc;font-size:14px}
+    .password-wrap{position:relative}
+    input{width:100%;padding:13px 46px 13px 14px;border-radius:11px;border:1px solid #343434;background:#0d0d0d;color:#fff;outline:none}
+    input:focus{border-color:#777}
+    .eye{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;background:transparent;color:#999;padding:0;margin:0}
+    .eye svg{width:21px;height:21px;display:block;margin:auto}
+    .primary,.secondary,.danger{border:0;border-radius:11px;padding:12px 16px;font-weight:700}
+    .primary{background:#fff;color:#111}
+    .secondary{background:#242424;color:#fff}
+    .danger{background:#712727;color:#fff}
+    .login .primary{width:100%;margin-top:18px}
+    .status{min-height:20px;margin-top:12px;font-size:14px;color:#999}
+    .error{color:#ff7777}.ok{color:#70d39a}
+    .app{min-height:100vh;display:flex}
+    .sidebar{width:250px;background:#111;border-right:1px solid #292929;padding:20px 14px;position:fixed;inset:0 auto 0 0;z-index:5}
+    .side-title{padding:8px 10px 20px}.side-title strong{display:block;letter-spacing:.12em}.side-title span{font-size:12px;color:#777}
+    .nav{display:grid;gap:6px}.nav button{border:0;background:transparent;color:#aaa;text-align:left;padding:12px 13px;border-radius:10px;font-weight:600}
+    .nav button.active,.nav button:hover{background:#242424;color:#fff}
+    .side-bottom{position:absolute;left:14px;right:14px;bottom:18px;display:grid;gap:8px}
+    .main{margin-left:250px;width:calc(100% - 250px);padding:24px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
+    .top-actions{display:flex;gap:8px}
+    .view{display:none}.view.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .card{background:#141414;border:1px solid #292929;border-radius:17px;padding:19px}
+    .stat b{display:block;font-size:30px;margin-top:7px}.stat span{color:#888;font-size:13px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+    .section-head button{margin:0}
+    .book{padding:14px 0;border-bottom:1px solid #292929}.book:last-child{border-bottom:0}
+    .book-title{font-weight:700}.book-author{color:#999;font-size:14px;margin-top:4px}
+    .book-actions{display:flex;gap:8px;margin-top:10px}.book-actions a{color:#fff;text-decoration:none;padding:8px 10px;background:#242424;border-radius:9px;font-size:13px}
+    .book-actions button{margin:0}
+    .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}
+    .upload-grid label{margin-top:0}
+    .file{padding:11px 12px}
+    .preview-shell{background:#070707;border:1px solid #292929;border-radius:17px;overflow:hidden}
+    .preview-bar{padding:10px 13px;background:#111;border-bottom:1px solid #292929;display:flex;justify-content:space-between;align-items:center}
+    iframe{display:block;width:100%;height:calc(100vh - 170px);min-height:620px;border:0;background:#fff}
+    .notice{padding:14px 15px;border:1px dashed #383838;border-radius:12px;color:#aaa;line-height:1.5}
+    @media(max-width:850px){
+      .sidebar{width:72px;padding:12px 8px}.side-title{padding:8px 5px 18px}.side-title strong{font-size:11px}.side-title span,.nav button span,.side-bottom span{display:none}
+      .nav button{text-align:center;font-size:20px;padding:11px 7px}.side-bottom{left:8px;right:8px}
+      .main{margin-left:72px;width:calc(100% - 72px);padding:16px}.grid{grid-template-columns:1fr}.upload-grid{grid-template-columns:1fr}.full{grid-column:auto}
+      .topbar{align-items:flex-start}.top-actions{flex-wrap:wrap}
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div id="loginCard" class="card">
-    <p class="muted">NOXCHIY · ADMIN</p>
-    <h1>Панель администратора</h1>
-    <p class="muted">Закрытый доступ.</p>
+<div id="loginView" class="login-wrap">
+  <div class="login">
+    <div class="brand">NOXCHIY · ADMIN</div>
+    <h1>Закрытая панель</h1>
+    <p class="muted">Вход доступен только администратору.</p>
     <form id="loginForm">
-      <label>Логин</label><input id="username" autocomplete="username" required>
-      <label>Пароль</label><input id="password" type="password" autocomplete="current-password" required>
-      <button type="submit">Войти</button>
+      <label for="username">Логин</label>
+      <input id="username" autocomplete="username" required>
+      <label for="password">Пароль</label>
+      <div class="password-wrap">
+        <input id="password" type="password" autocomplete="current-password" required>
+        <button class="eye" id="togglePassword" type="button" aria-label="Показать пароль" title="Показать пароль"></button>
+      </div>
+      <button class="primary" type="submit">Войти</button>
       <div id="loginStatus" class="status"></div>
     </form>
   </div>
+</div>
 
-  <div id="adminCard" class="hidden">
-    <div class="row">
-      <div><p class="muted">NOXCHIY · ADMIN</p><h1>Управление сайтом</h1></div>
-      <button id="logout" class="secondary">Выйти</button>
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="side-title"><strong>NOXCHIY</strong><span>ADMIN</span></div>
+    <nav class="nav">
+      <button class="active" data-view="dashboard">⌂ <span>Главная</span></button>
+      <button data-view="preview">◉ <span>Сайт</span></button>
+      <button data-view="books">▣ <span>Книги</span></button>
+      <button data-view="content">✎ <span>Материалы</span></button>
+    </nav>
+    <div class="side-bottom">
+      <button class="secondary" id="publicSite"><span>Открыть сайт</span> ↗</button>
+      <button class="secondary" id="logout"><span>Выйти</span> ⇥</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="brand">ПАНЕЛЬ УПРАВЛЕНИЯ</div>
+        <h1 id="pageTitle">Главная</h1>
+      </div>
+      <div class="top-actions">
+        <button class="secondary" id="refreshAll">Обновить</button>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Добавить книгу</h2>
-      <form id="uploadForm">
-        <label>Название книги</label><input id="title" required maxlength="180">
-        <label>Автор</label><input id="author" maxlength="120">
-        <label>PDF-файл</label><input id="file" type="file" accept="application/pdf,.pdf" required>
-        <button type="submit">Опубликовать книгу</button>
-        <div id="uploadStatus" class="status"></div>
-      </form>
-    </div>
+    <section class="view active" id="dashboard">
+      <div class="grid">
+        <div class="card stat"><span>Опубликованные книги</span><b id="bookCount">—</b></div>
+        <div class="card stat"><span>Статус доступа</span><b>ADMIN</b></div>
+        <div class="card stat"><span>Сайт</span><b>LIVE</b></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="section-head"><h2>Сайт глазами читателя</h2><button class="primary" data-open-view="preview">Открыть сайт</button></div>
+        <p class="muted" style="line-height:1.6">Здесь ты можешь перейти к полному предпросмотру сайта. Администратор видит тот же сайт, что и читатель, но дополнительно имеет инструменты управления.</p>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="section-head"><h2>Быстрые действия</h2></div>
+        <div class="grid">
+          <button class="primary" data-open-view="books">📚 Управлять книгами</button>
+          <button class="secondary" data-open-view="content">✎ Управлять материалами</button>
+          <button class="secondary" data-open-view="preview">◉ Смотреть сайт</button>
+        </div>
+      </div>
+    </section>
 
-    <div class="card">
-      <div class="row"><h2>Опубликованные книги</h2><button id="refresh" class="secondary">Обновить</button></div>
-      <div id="books"><p class="muted">Загрузка…</p></div>
-    </div>
-  </div>
+    <section class="view" id="preview">
+      <div class="preview-shell">
+        <div class="preview-bar"><span class="muted">Публичный сайт</span><div><button class="secondary" id="reloadPreview">Обновить</button> <button class="primary" id="openPublic">Открыть отдельно</button></div></div>
+        <iframe id="siteFrame" src="/"></iframe>
+      </div>
+    </section>
+
+    <section class="view" id="books">
+      <div class="card">
+        <div class="section-head"><h2>Добавить книгу</h2></div>
+        <form id="uploadForm" class="upload-grid">
+          <div><label for="title">Название</label><input id="title" maxlength="180" required></div>
+          <div><label for="author">Автор</label><input id="author" maxlength="120" placeholder="Необязательно"></div>
+          <div class="full"><label for="file">PDF-файл</label><input id="file" class="file" type="file" accept="application/pdf,.pdf" required></div>
+          <div class="full"><button class="primary" type="submit">Опубликовать книгу</button><div id="uploadStatus" class="status"></div></div>
+        </form>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="section-head"><h2>Опубликованные книги</h2><button class="secondary" id="refreshBooks">Обновить</button></div>
+        <div id="booksList"><p class="muted">Загрузка…</p></div>
+      </div>
+    </section>
+
+    <section class="view" id="content">
+      <div class="card">
+        <h2>Материалы сайта</h2>
+        <div class="notice" style="margin-top:14px">
+          <b>Следующий уровень админки.</b><br>
+          Здесь будут добавляться и редактироваться исторические статьи, изображения, личности, события и другие разделы сайта — без необходимости менять код вручную.
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script type="module">
 import { upload } from 'https://esm.sh/@vercel/blob@2.4.0/client';
 
-const loginCard=document.querySelector('#loginCard'), adminCard=document.querySelector('#adminCard');
-const loginStatus=document.querySelector('#loginStatus'), uploadStatus=document.querySelector('#uploadStatus');
-const booksEl=document.querySelector('#books');
+const loginView=document.querySelector('#loginView');
+const appView=document.querySelector('#appView');
+const loginStatus=document.querySelector('#loginStatus');
+const booksList=document.querySelector('#booksList');
+const bookCount=document.querySelector('#bookCount');
+const pageTitle=document.querySelector('#pageTitle');
+const titles={dashboard:'Главная',preview:'Сайт',books:'Книги',content:'Материалы'};
 
-async function api(url, options={}) {
+function eyeIcon(open){
+  return open
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.2 3.7"/><path d="M6.6 6.7C3.7 8.4 2 12 2 12s3.5 7 10 7a9.9 9.9 0 0 0 3.1-.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+}
+document.querySelector('#togglePassword').innerHTML=eyeIcon(false);
+document.querySelector('#togglePassword').onclick=()=>{
+  const p=document.querySelector('#password'), open=p.type==='text';
+  p.type=open?'password':'text';
+  document.querySelector('#togglePassword').innerHTML=eyeIcon(!open);
+  document.querySelector('#togglePassword').setAttribute('aria-label',open?'Показать пароль':'Скрыть пароль');
+};
+
+async function api(url, options={}){
   const r=await fetch(url,{credentials:'same-origin',...options});
-  let data={}; try{data=await r.json()}catch{}
-  if(!r.ok) throw new Error(data.error||'Ошибка запроса');
+  let data={};try{data=await r.json()}catch{}
+  if(!r.ok)throw new Error(data.error||'Ошибка запроса');
   return data;
 }
-function showAdmin(){loginCard.classList.add('hidden');adminCard.classList.remove('hidden');loadBooks()}
-async function check(){try{await api('/api/books');}catch{}}
+function showAdmin(){loginView.classList.add('hidden');appView.classList.remove('hidden');loadBooks()}
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  document.querySelector('#'+name).classList.add('active');
+  pageTitle.textContent=titles[name]||name;
+  if(name==='books')loadBooks();
+}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+document.querySelectorAll('[data-open-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.openView));
+
 document.querySelector('#loginForm').addEventListener('submit',async e=>{
   e.preventDefault();loginStatus.className='status';loginStatus.textContent='Вход…';
-  try{await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.querySelector('#username').value,password:document.querySelector('#password').value})});showAdmin()}
-  catch(err){loginStatus.className='status error';loginStatus.textContent=err.message}
+  try{
+    await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.querySelector('#username').value,password:document.querySelector('#password').value})});
+    showAdmin();
+  }catch(err){loginStatus.className='status error';loginStatus.textContent=err.message}
 });
 document.querySelector('#logout').onclick=async()=>{await api('/api/logout',{method:'POST'});location.reload()};
-document.querySelector('#refresh').onclick=loadBooks;
+document.querySelector('#publicSite').onclick=()=>window.open('/', '_blank');
+document.querySelector('#openPublic').onclick=()=>window.open('/', '_blank');
+document.querySelector('#reloadPreview').onclick=()=>{document.querySelector('#siteFrame').src='/';};
+document.querySelector('#refreshAll').onclick=()=>{loadBooks();document.querySelector('#siteFrame').src='/';};
+document.querySelector('#refreshBooks').onclick=loadBooks;
 
 async function loadBooks(){
-  booksEl.innerHTML='<p class="muted">Загрузка…</p>';
   try{
     const data=await api('/api/books');
-    if(!data.books.length){booksEl.innerHTML='<p class="muted">Книг пока нет.</p>';return}
-    booksEl.innerHTML=data.books.map(b=>'<div class="book"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.url)+'" target="_blank">Открыть</a><button class="danger" data-url="'+esc(b.url)+'">Удалить</button></div></div>').join('');
-    booksEl.querySelectorAll('.danger').forEach(btn=>btn.onclick=async()=>{if(!confirm('Удалить эту книгу?'))return;try{await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:btn.dataset.url})});loadBooks()}catch(err){alert(err.message)}});
-  }catch(err){booksEl.innerHTML='<p class="error">'+esc(err.message)+'</p>'}
+    bookCount.textContent=data.books.length;
+    if(!data.books.length){booksList.innerHTML='<p class="muted">Книг пока нет.</p>';return}
+    booksList.innerHTML=data.books.map(b=>'<div class="book"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.url)+'" target="_blank">Открыть</a><button class="danger" data-url="'+esc(b.url)+'">Удалить</button></div></div>').join('');
+    booksList.querySelectorAll('.danger').forEach(btn=>btn.onclick=async()=>{
+      if(!confirm('Удалить эту книгу?'))return;
+      try{await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:btn.dataset.url})});loadBooks()}
+      catch(err){alert(err.message)}
+    });
+  }catch(err){booksList.innerHTML='<p class="error">'+esc(err.message)+'</p>'}
 }
 document.querySelector('#uploadForm').addEventListener('submit',async e=>{
-  e.preventDefault();const file=document.querySelector('#file').files[0];
-  uploadStatus.className='status';uploadStatus.textContent='Загрузка…';
+  e.preventDefault();
+  const file=document.querySelector('#file').files[0], status=document.querySelector('#uploadStatus');
+  status.className='status';status.textContent='Загрузка…';
   try{
     if(!file||file.type!=='application/pdf')throw new Error('Выберите PDF-файл.');
     const meta={title:document.querySelector('#title').value.trim(),author:document.querySelector('#author').value.trim()};
     await upload(file.name,{body:file,access:'public',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta)});
-    uploadStatus.className='status ok';uploadStatus.textContent='Книга опубликована.';
+    status.className='status ok';status.textContent='Книга опубликована.';
     e.target.reset();loadBooks();
-  }catch(err){uploadStatus.className='status error';uploadStatus.textContent=err.message}
+  }catch(err){status.className='status error';status.textContent=err.message}
 });
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-check();
 </script>
 </body>
 </html>
