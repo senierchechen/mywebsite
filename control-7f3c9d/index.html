@@ -68,10 +68,10 @@ async function api(url, options={}) {
   return data;
 }
 function showAdmin(){loginCard.classList.add('hidden');adminCard.classList.remove('hidden');loadBooks()}
-async function check(){try{await api('/api/books');showAdmin()}catch{}}
+async function check(){try{await api('/api/books');}catch{}}
 document.querySelector('#loginForm').addEventListener('submit',async e=>{
   e.preventDefault();loginStatus.className='status';loginStatus.textContent='Вход…';
-  try{await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value,password:password.value})});showAdmin()}
+  try{await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.querySelector('#username').value,password:document.querySelector('#password').value})});showAdmin()}
   catch(err){loginStatus.className='status error';loginStatus.textContent=err.message}
 });
 document.querySelector('#logout').onclick=async()=>{await api('/api/logout',{method:'POST'});location.reload()};
@@ -92,7 +92,7 @@ document.querySelector('#uploadForm').addEventListener('submit',async e=>{
   try{
     if(!file||file.type!=='application/pdf')throw new Error('Выберите PDF-файл.');
     const meta={title:document.querySelector('#title').value.trim(),author:document.querySelector('#author').value.trim()};
-    await upload(file.name,{access:'public',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta),file});
+    await upload(file.name,{body:file,access:'public',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta)});
     uploadStatus.className='status ok';uploadStatus.textContent='Книга опубликована.';
     e.target.reset();loadBooks();
   }catch(err){uploadStatus.className='status error';uploadStatus.textContent=err.message}
