@@ -3,10 +3,15 @@ import { isAdmin } from './_auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Требуется вход администратора.' });
 
   try {
     const body = await req.json();
+
+    // Client token generation must come from an authenticated admin.
+    // Upload-completed callbacks are authenticated by Vercel Blob itself.
+    if (body?.type !== 'blob.upload-completed' && !isAdmin(req)) {
+      return res.status(401).json({ error: 'Требуется вход администратора.' });
+    }
 
     const result = await handleUpload({
       body,
