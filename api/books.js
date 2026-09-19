@@ -13,12 +13,17 @@ export default async function handler(req, res) {
         const parts = name.split('__');
         const title = decodeURIComponent(parts[1] || 'Книга');
         const author = decodeURIComponent(parts[2] || '');
+        const coverPath = parts[3] ? decodeURIComponent(parts[3]) : '';
 
         return {
           title,
           author,
           pathname: blob.pathname,
           file_url: '/api/book?pathname=' + encodeURIComponent(blob.pathname),
+          cover_pathname: coverPath,
+          cover_url: coverPath
+            ? '/api/book-cover?pathname=' + encodeURIComponent(coverPath)
+            : '',
           size: blob.size,
           uploadedAt: blob.uploadedAt,
         };
