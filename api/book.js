@@ -1,26 +1,29 @@
 import { get } from '@vercel/blob';
 import { Readable } from 'node:stream';
 
-function decodePath(value = '') {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
+function getTarget(req) {
+  if (typeof req.query.url === 'string' && req.query.url) return req.query.url;
+  if (typeof req.query.pathname === 'string' && req.query.pathname) {
+    try {
+      return decodeURIComponent(req.query.pathname);
+    } catch {
+      return req.query.pathname;
+    }
   }
+  return '';
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).send('Method not allowed');
 
-  const encodedPathname = typeof req.query.pathname === 'string' ? req.query.pathname : '';
-  const pathname = decodePath(encodedPathname);
+  const target = getTarget(req);
 
-  if (!pathname || !pathname.startsWith('books/') || !pathname.toLowerCase().endsWith('.pdf')) {
+  if (!target || (!target.startsWith('https://') && !target.startsWith('books/'))) {
     return res.status(400).send('Недопустимый файл.');
   }
 
   try {
-    const result = await get(pathname, {
+    const result = await get(target, {
       access: 'private',
       token: process.env.BLOB_READ_WRITE_TOKEN,
       useCache: false,

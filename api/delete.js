@@ -16,18 +16,18 @@ export default async function handler(req, res) {
   const rawPathname = typeof req.body?.pathname === 'string' ? req.body.pathname : '';
   const pathname = decodePath(rawPathname);
 
-  if (typeof pathname !== 'string' || !pathname.startsWith('books/') || !pathname.toLowerCase().endsWith('.pdf')) {
+  if (!pathname || !pathname.startsWith('books/') || !pathname.toLowerCase().endsWith('.pdf')) {
     return res.status(400).json({ error: 'Недопустимый файл.' });
   }
 
   try {
     const name = pathname.split('/').pop().replace(/\.pdf$/i, '');
     const parts = name.split('__');
-    const coverPath = parts[3] ? decodePath(parts[3]) : '';
+    const coverUrl = parts[3] ? decodePath(parts[3]) : '';
 
     await del(pathname);
-    if (coverPath && coverPath.startsWith('covers/')) {
-      await del(coverPath);
+    if (coverUrl && coverUrl.startsWith('https://')) {
+      await del(coverUrl);
     }
 
     return res.status(200).json({ ok: true });

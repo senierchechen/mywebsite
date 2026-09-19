@@ -265,11 +265,12 @@ document.querySelector('#uploadForm').addEventListener('submit',async e=>{
     const id=Date.now();
     const ext=cover.type==='image/png'?'png':cover.type==='image/webp'?'webp':'jpg';
     const coverPath='covers/' + id + '.' + ext;
-    await upload(coverPath,cover,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({kind:'cover'}),multipart:cover.size > 4.5 * 1024 * 1024});
+    const coverBlob=await upload(coverPath,cover,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({kind:'cover'}),multipart:cover.size > 4.5 * 1024 * 1024});
     const safeTitle = meta.title || 'Книга';
     const safeAuthor = meta.author || 'Автор';
-    const pathname = 'books/' + id + '__' + encodeURIComponent(safeTitle) + '__' + encodeURIComponent(safeAuthor) + '__' + encodeURIComponent(coverPath) + '.pdf';
-    await upload(pathname,file,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({...meta,coverPath}),multipart:file.size > 4.5 * 1024 * 1024});
+    const coverUrl = coverBlob.url || '';
+    const pathname = 'books/' + id + '__' + encodeURIComponent(safeTitle) + '__' + encodeURIComponent(safeAuthor) + '__' + encodeURIComponent(coverUrl) + '.pdf';
+    await upload(pathname,file,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({...meta,coverPath:coverUrl}),multipart:file.size > 4.5 * 1024 * 1024});
     status.className='status ok';status.textContent='Книга опубликована.';
     e.target.reset();loadBooks();
   }catch(err){status.className='status error';status.textContent=err.message}
