@@ -238,7 +238,7 @@ document.querySelector('#logout').onclick=async()=>{await api('/api/logout',{met
 document.querySelector('#publicSite').onclick=()=>window.open('/', '_blank');
 document.querySelector('#openPublic').onclick=()=>window.open('/', '_blank');
 document.querySelector('#reloadPreview').onclick=()=>{document.querySelector('#siteFrame').src='/';};
-document.querySelector('#refreshAll').onclick=()=>{loadBooks();document.querySelector('#siteFrame').src='/';};
+document.querySelector('#refreshAll').onclick=async()=>{const btn=document.querySelector('#refreshAll');btn.disabled=true;btn.textContent='Обновление…';try{await loadBooks();document.querySelector('#siteFrame').src='/?refresh='+Date.now()}finally{btn.disabled=false;btn.textContent='Обновить'}};
 document.querySelector('#refreshBooks').onclick=loadBooks;
 
 async function loadBooks(){
@@ -249,8 +249,7 @@ async function loadBooks(){
     booksList.innerHTML=data.books.map(b=>'<div class="book"><div class="book-cover">'+(b.cover_url?'<img src="'+esc(b.cover_url)+'" alt="Обложка '+esc(b.title)+'">':'Обложка<br>не добавлена')+'</div><div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.file_url)+'" target="_blank" rel="noopener">Открыть книгу</a><button class="danger" data-pathname="'+esc(b.pathname)+'">Удалить</button></div></div></div>').join('');
     booksList.querySelectorAll('.danger').forEach(btn=>btn.onclick=async()=>{
       if(!confirm('Удалить эту книгу?'))return;
-      try{await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pathname:btn.dataset.pathname})});loadBooks()}
-      catch(err){alert(err.message)}
+      try{btn.disabled=true;btn.textContent='Удаление…';await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pathname:btn.dataset.pathname})});await loadBooks()}catch(err){btn.disabled=false;btn.textContent='Удалить';alert(err.message)}
     });
   }catch(err){booksList.innerHTML='<p class="error">'+esc(err.message)+'</p>'}
 }

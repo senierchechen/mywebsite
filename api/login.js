@@ -1,6 +1,6 @@
 import { COOKIE, makeSession, sameSecret } from './_auth.js';
 
-const maxAge = 60 * 60 * 12;
+const maxAge = 60 * 60 * 24 * 30;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -18,6 +18,6 @@ export default async function handler(req, res) {
   if (!okUser || !okPass) return res.status(401).json({ error: 'Неверный логин или пароль.' });
 
   const token = makeSession(expectedUser);
-  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`);
+  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`);
   return res.status(200).json({ ok: true });
 }
