@@ -30,7 +30,9 @@ export default async function handler(req, res) {
       })
       .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
 
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    // The admin list must always reflect the real Blob storage immediately
+    // after upload/delete, never a cached copy.
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
     return res.status(200).json({ books });
   } catch {
     return res.status(500).json({
