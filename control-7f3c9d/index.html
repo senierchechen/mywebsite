@@ -304,10 +304,10 @@ async function loadBooks(){
     const data=await api('/api/books');
     bookCount.textContent=data.books.length;
     if(!data.books.length){booksList.innerHTML='<p class="muted">Книг пока нет.</p>';return}
-    booksList.innerHTML=data.books.map(b=>'<div class="book"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.url)+'" target="_blank">Открыть</a><button class="danger" data-url="'+esc(b.url)+'">Удалить</button></div></div>').join('');
+    booksList.innerHTML=data.books.map(b=>'<div class="book"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.file_url)+'" target="_blank">Открыть</a><button class="danger" data-pathname="'+esc(b.pathname)+'">Удалить</button></div></div>').join('');
     booksList.querySelectorAll('.danger').forEach(btn=>btn.onclick=async()=>{
       if(!confirm('Удалить эту книгу?'))return;
-      try{await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:btn.dataset.url})});loadBooks()}
+      try{await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pathname:btn.dataset.pathname})});loadBooks()}
       catch(err){alert(err.message)}
     });
   }catch(err){booksList.innerHTML='<p class="error">'+esc(err.message)+'</p>'}
@@ -319,7 +319,10 @@ document.querySelector('#uploadForm').addEventListener('submit',async e=>{
   try{
     if(!file||file.type!=='application/pdf')throw new Error('Выберите PDF-файл.');
     const meta={title:document.querySelector('#title').value.trim(),author:document.querySelector('#author').value.trim()};
-    await upload(file.name,{body:file,access:'public',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta)});
+    const safeTitle = meta.title || 'Книга';
+    const safeAuthor = meta.author || 'Автор';
+    const pathname = 'books/' + Date.now() + '__' + encodeURIComponent(safeTitle) + '__' + encodeURIComponent(safeAuthor) + '.pdf';
+    await upload(pathname,{body:file,access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta),multipart:file.size > 4.5 * 1024 * 1024});
     status.className='status ok';status.textContent='Книга опубликована.';
     e.target.reset();loadBooks();
   }catch(err){status.className='status error';status.textContent=err.message}
