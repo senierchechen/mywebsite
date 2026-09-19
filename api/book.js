@@ -1,10 +1,19 @@
 import { get } from '@vercel/blob';
 import { Readable } from 'node:stream';
 
+function decodePath(value = '') {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).send('Method not allowed');
 
-  const pathname = typeof req.query.pathname === 'string' ? req.query.pathname : '';
+  const encodedPathname = typeof req.query.pathname === 'string' ? req.query.pathname : '';
+  const pathname = decodePath(encodedPathname);
 
   if (!pathname || !pathname.startsWith('books/') || !pathname.toLowerCase().endsWith('.pdf')) {
     return res.status(400).send('Недопустимый файл.');
