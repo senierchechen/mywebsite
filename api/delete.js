@@ -1,3 +1,4 @@
+import { del } from '@vercel/blob';
 import { isAdmin } from './_auth.js';
 
 function decodePath(value = '') {
@@ -13,6 +14,15 @@ async function listBooksFresh() {
   });
   if (!response.ok) throw new Error('Не удалось получить список файлов из Blob.');
   return (await response.json()).blobs || [];
+}
+
+async function waitUntilDeleted(pathname) {
+  for (let attempt = 0; attempt < 15; attempt++) {
+    const remaining = await listBooksFresh();
+    if (!remaining.some((blob) => blob.pathname === pathname)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  return false;
 }
 
 export default async function handler(req, res) {
@@ -33,17 +43,10 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Книга уже удалена или не найдена.' });
     }
 
-    const deleteResponse = await fetch(target.url, {
-      method: 'DELETE',
-      headers: { Authorization: 'Bearer ' + (process.env.BLOB_READ_WRITE_TOKEN || '') },
-      cache: 'no-store',
+    // Use Vercel's official Blob SDK delete operation with the private-store token.
+    await del(pathname, {
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
-
-    if (!deleteResponse.ok) {
-      const message = await deleteResponse.text().catch(() => '');
-      console.error('Blob delete failed:', deleteResponse.status, message);
-      return res.status(500).json({ error: 'Vercel Blob не подтвердил удаление файла.' });
-    }
 
     // Remove the cover if this book has one.
     const name = pathname.split('/').pop().replace(/\.pdf$/i, '');
@@ -51,18 +54,22 @@ export default async function handler(req, res) {
     const coverUrl = parts[3] ? decodePath(parts[3]) : '';
 
     if (coverUrl && coverUrl.startsWith('https://')) {
-      const coverDelete = await fetch(coverUrl, {
-        method: 'DELETE',
-        headers: { Authorization: 'Bearer ' + (process.env.BLOB_READ_WRITE_TOKEN || '') },
-        cache: 'no-store',
-      });
-      if (!coverDelete.ok) console.error('Cover delete failed:', coverDelete.status);
+      try {
+        await del(coverUrl, {
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        });
+      } catch (coverError) {
+        console.error('Cover delete failed:', coverError);
+      }
     }
 
-    // Verify against the uncached Blob API.
-    const remaining = await listBooksFresh();
-    if (remaining.some((blob) => blob.pathname === pathname)) {
-      return res.status(500).json({ error: 'Vercel Blob всё ещё видит книгу. Удаление не подтверждено.' });
+    // del() is asynchronous, so wait until the Blob API no longer lists the PDF.
+    const deleted = await waitUntilDeleted(pathname);
+
+    if (!deleted) {
+      return res.status(500).json({
+        error: 'Удаление запущено, но Vercel Blob пока не подтвердил исчезновение книги. Попробуйте обновить список через несколько секунд.',
+      });
     }
 
     res.setHeader('Cache-Control', 'no-store, max-age=0');
