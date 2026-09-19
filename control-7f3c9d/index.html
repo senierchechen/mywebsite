@@ -48,9 +48,11 @@
     .stat b{display:block;font-size:30px;margin-top:7px}.stat span{color:#888;font-size:13px}
     .section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
     .section-head button{margin:0}
-    .book{padding:14px 0;border-bottom:1px solid #292929}.book:last-child{border-bottom:0}
-    .book-title{font-weight:700}.book-author{color:#999;font-size:14px;margin-top:4px}
-    .book-actions{display:flex;gap:8px;margin-top:10px}.book-actions a{color:#fff;text-decoration:none;padding:8px 10px;background:#242424;border-radius:9px;font-size:13px}
+    .book{padding:14px 0;border-bottom:1px solid #292929;display:grid;grid-template-columns:92px 1fr;gap:14px}.book:last-child{border-bottom:0}
+    .book-cover{width:92px;height:128px;border-radius:9px;overflow:hidden;background:#202020;border:1px solid #303030;display:flex;align-items:center;justify-content:center;color:#777;font-size:11px;text-align:center}
+    .book-cover img{width:100%;height:100%;object-fit:cover;display:block}
+    .book-info{min-width:0}.book-title{font-weight:700}.book-author{color:#999;font-size:14px;margin-top:4px}
+    .book-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.book-actions a{color:#fff;text-decoration:none;padding:8px 10px;background:#242424;border-radius:9px;font-size:13px}
     .book-actions button{margin:0}
     .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}
     .upload-grid label{margin-top:0}
@@ -161,6 +163,7 @@
         <form id="uploadForm" class="upload-grid">
           <div><label for="title">Название</label><input id="title" maxlength="180" required></div>
           <div><label for="author">Автор</label><input id="author" maxlength="120" placeholder="Необязательно"></div>
+          <div class="full"><label for="cover">Обложка книги</label><input id="cover" class="file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" required></div>
           <div class="full"><label for="file">PDF-файл</label><input id="file" class="file" type="file" accept="application/pdf,.pdf" required></div>
           <div class="full"><button class="primary" type="submit">Опубликовать книгу</button><div id="uploadStatus" class="status"></div></div>
         </form>
@@ -243,7 +246,7 @@ async function loadBooks(){
     const data=await api('/api/books');
     bookCount.textContent=data.books.length;
     if(!data.books.length){booksList.innerHTML='<p class="muted">Книг пока нет.</p>';return}
-    booksList.innerHTML=data.books.map(b=>'<div class="book"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.file_url)+'" target="_blank">Открыть</a><button class="danger" data-pathname="'+esc(b.pathname)+'">Удалить</button></div></div>').join('');
+    booksList.innerHTML=data.books.map(b=>'<div class="book"><div class="book-cover">'+(b.cover_url?'<img src="'+esc(b.cover_url)+'" alt="Обложка '+esc(b.title)+'">':'Обложка<br>не добавлена')+'</div><div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author||'Автор не указан')+'</div><div class="book-actions"><a href="'+esc(b.file_url)+'" target="_blank" rel="noopener">Открыть книгу</a><button class="danger" data-pathname="'+esc(b.pathname)+'">Удалить</button></div></div></div>').join('');
     booksList.querySelectorAll('.danger').forEach(btn=>btn.onclick=async()=>{
       if(!confirm('Удалить эту книгу?'))return;
       try{await api('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pathname:btn.dataset.pathname})});loadBooks()}
@@ -253,15 +256,20 @@ async function loadBooks(){
 }
 document.querySelector('#uploadForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const file=document.querySelector('#file').files[0], status=document.querySelector('#uploadStatus');
+  const file=document.querySelector('#file').files[0], cover=document.querySelector('#cover').files[0], status=document.querySelector('#uploadStatus');
   status.className='status';status.textContent='Загрузка…';
   try{
     if(!file||file.type!=='application/pdf')throw new Error('Выберите PDF-файл.');
+    if(!cover||!['image/jpeg','image/png','image/webp'].includes(cover.type))throw new Error('Выберите JPG, PNG или WEBP для обложки.');
     const meta={title:document.querySelector('#title').value.trim(),author:document.querySelector('#author').value.trim()};
+    const id=Date.now();
+    const ext=cover.type==='image/png'?'png':cover.type==='image/webp'?'webp':'jpg';
+    const coverPath='covers/' + id + '.' + ext;
+    await upload(coverPath,cover,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({kind:'cover'}),multipart:cover.size > 4.5 * 1024 * 1024});
     const safeTitle = meta.title || 'Книга';
     const safeAuthor = meta.author || 'Автор';
-    const pathname = 'books/' + Date.now() + '__' + encodeURIComponent(safeTitle) + '__' + encodeURIComponent(safeAuthor) + '.pdf';
-    await upload(pathname,file,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify(meta),multipart:file.size > 4.5 * 1024 * 1024});
+    const pathname = 'books/' + id + '__' + encodeURIComponent(safeTitle) + '__' + encodeURIComponent(safeAuthor) + '__' + encodeURIComponent(coverPath) + '.pdf';
+    await upload(pathname,file,{access:'private',handleUploadUrl:'/api/upload',clientPayload:JSON.stringify({...meta,coverPath}),multipart:file.size > 4.5 * 1024 * 1024});
     status.className='status ok';status.textContent='Книга опубликована.';
     e.target.reset();loadBooks();
   }catch(err){status.className='status error';status.textContent=err.message}
