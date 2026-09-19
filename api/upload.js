@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const body = await req.json();
+    // Vercel Node API routes expose the parsed request body as req.body.\n    // Passing req.body directly is required by handleUpload to generate the client token.
 
     // Client token generation must come from an authenticated admin.
     // Upload-completed callbacks are authenticated by Vercel Blob itself.
